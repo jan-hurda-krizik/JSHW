@@ -96,3 +96,4 @@ setInterval(() => {
 // Spuštění hry
 addCircle();
 animate();
+//test
