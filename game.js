@@ -6,12 +6,21 @@ canvas.height = window.innerHeight;
 
 let score = 0;
 let gameOver = false; // Indikátor konce hry
-const maxCircles = 20; // Limit kuliček na obrazovce
+const maxCircles = 19; // Limit kuliček na obrazovce
 const scoreElement = document.getElementById('score');
-const circleCountElement = document.getElementById('circleCount'); // Nový ukazatel
+const circleCountElement = document.getElementById('circleCount'); // Ukazatel počtu kuliček
+const startScreen = document.getElementById('startScreen'); // Úvodní obrazovka
+const startButton = document.getElementById('startButton'); // Tlačítko start
+const endScreen = document.getElementById('endScreen'); // Obrazovka konce hry
+const finalScoreElement = document.getElementById('finalScore'); // Zobrazení konečného skóre
+const countdownElement = document.getElementById('countdown'); // Zobrazení odpočtu
+const restartButton = document.getElementById('restartButton'); // Tlačítko restart
 
 let circles = [];
 const mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+
+let countdown = 10; // Odpočet v sekundách
+let countdownInterval; // Interval pro odpočet
 
 // Událost pohybu myši
 canvas.addEventListener('mousemove', (event) => {
@@ -77,7 +86,7 @@ class Circle {
 // Přidání kruhů
 function addCircle() {
     if (gameOver) return; // Pokud hra skončila, nepřidávej kruhy
-    const radius = Math.random() * 20 + 10;
+    const radius = Math.random() * 30 + 15; // Poloměr zvětšen na 15–45 pixelů
     const x = Math.random() * (canvas.width - radius * 2) + radius;
     const y = Math.random() * (canvas.height - radius * 2) + radius;
     const speedX = (Math.random() - 0.5) * 2;
@@ -99,13 +108,48 @@ function updateCircleCount() {
 // Konec hry
 function endGame() {
     gameOver = true;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'red';
-    ctx.font = '48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Konec hry!', canvas.width / 2, canvas.height / 2);
-    ctx.font = '24px Arial';
-    ctx.fillText(`Skóre: ${score}`, canvas.width / 2, canvas.height / 2 + 50);
+    // Zobraz endScreen
+    endScreen.classList.add('active');
+    finalScoreElement.textContent = `Tvé skóre je ${score}.`;
+    // Nastav odpočet
+    countdown = 10;
+    countdownElement.textContent = countdown;
+    // Spusť odpočet
+    countdownInterval = setInterval(() => {
+        countdown--;
+        countdownElement.textContent = countdown;
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            resetGame();
+        }
+    }, 1000);
+}
+
+// Reset hry
+function resetGame() {
+    // Skryj endScreen
+    endScreen.classList.remove('active');
+    // Resetuj proměnné
+    score = 0;
+    scoreElement.textContent = `Skóre: ${score}`;
+    gameOver = false;
+    circles = [];
+    updateCircleCount();
+    // Zobraz startScreen
+    startScreen.classList.add('active');
+}
+
+// Spuštění hry
+function startGame() {
+    startScreen.classList.remove('active'); // Skryj úvodní obrazovku
+    // Ujisti se, že proměnné jsou resetovány
+    score = 0;
+    scoreElement.textContent = `Skóre: ${score}`;
+    gameOver = false;
+    circles = [];
+    updateCircleCount();
+    addCircle();
+    animate();
 }
 
 // Animace
@@ -119,10 +163,13 @@ function animate() {
 }
 
 // Přidávání kruhů pravidelně
-setInterval(() => {
+const addCircleInterval = setInterval(() => {
     addCircle();
 }, 2000);
 
-// Spuštění hry
-addCircle();
-animate();
+// Připojení událostí pro start a restart
+startButton.addEventListener('click', startGame);
+restartButton.addEventListener('click', () => {
+    clearInterval(countdownInterval);
+    resetGame();
+});
